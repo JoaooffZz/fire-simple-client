@@ -2,29 +2,30 @@ package middleware
 
 import (
 	"strings"
+
+	fserr "github.com/JoaooffZz/fire-simple-client/client/errors"
 )
 
-func AuthUri(url, user, password string) error {
+// firesp://user:key@firesimple:port/
+func AuthUrl(url string) (string, error) {
 
 	withoutPrefix := strings.TrimPrefix(url, "frsp://")
+	if withoutPrefix == "" {
+		return "", fserr.UrlNotAuth{
+			Msg: "prefix (firesp://) not found",
+		}
+	}
 
 	parts := strings.SplitN(withoutPrefix, "@", 2)
+	address := parts[1]
 
-	userPass := parts[0]
+	domain := strings.SplitN(address, ":", 2)
 
-	credURL := strings.SplitN(userPass, ":", 2)
-
-	if credURL[0] != user {
-		return &NotAuthClient{
-			Msg: "User different default",
+	if domain[0] != "firesimple" {
+		return "", fserr.UrlNotAuth{
+			Msg: "prefix (firesimple) not found",
 		}
 	}
 
-	if credURL[1] != password {
-		return &NotAuthClient{
-			Msg: "Password different default",
-		}
-	}
-
-	return nil
+	return domain[1], nil
 }
